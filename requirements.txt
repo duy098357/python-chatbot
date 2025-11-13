@@ -1,6 +1,7 @@
 
 # Web framework
 flask
+gunicorn
 
 # Environment variable loader
 python-dotenv
