@@ -85,27 +85,6 @@ It provides real-time eligibility checks, EMI calculations, and integrates with 
 
       Copy the public Ngrok URL and paste it in your Twilio WhatsApp sandbox configuration.
 
-🌐 Deployment (Vercel)
-
-      Push your project to GitHub
-
-      Go to Vercel
-
-      Click “New Project” → “Import Git Repository”
-
-      Set your environment variables in Vercel Dashboard → Settings → Environment Variables
-
-      Deploy 🚀
-
-      Example vercel.json
-      {
-      "builds": [
-         { "src": "app.py", "use": "@vercel/python" }
-      ],
-      "routes": [
-         { "src": "/(.*)", "dest": "app.py" }
-      ]
-      }
 
 🧠 Technologies Used
 

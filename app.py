@@ -1,164 +1,3 @@
-<<<<<<< HEAD
-# app.py
-import os, json, requests
-from flask import Flask, request, jsonify, render_template
-from dotenv import load_dotenv
-
-load_dotenv()
-app = Flask(__name__)
-
-# ========== CONFIG ==========
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-HUBSPOT_API_KEY = os.getenv("HUBSPOT_API_KEY")
-FLOIFY_BASE = os.getenv("FLOIFY_BASE_URL")
-FLOIFY_EMBED_KEY = os.getenv("FLOIFY_EMBED_KEY")
-
-HUBSPOT_BASE = "https://api.hubapi.com"
-
-# ========== SYSTEM PROMPT ==========
-SYSTEM_PROMPT = """
-You are “LendAI”, a compliant, friendly loan intake assistant for [CompanyName].
-Your mission is to convert visitors into loan applicants by:
- - Qualifying them accurately and quickly,
- - Overcoming hesitations or objections,
- - Explaining loan products clearly,
- - And guiding them to begin the application process on our website (Floify POS link).
-
----
-### Core Behavior Guidelines
-1. Tone: Warm, knowledgeable, professional. Never pushy.
-2. Compliance: Avoid quoting rates or APRs. Instead, say “Exact rates depend on your application; I can help you start it now so we can get your personalized quote.”
-3. Data Sensitivity: Never ask for SSN or DOB. You can ask for name, email, phone, property type, loan purpose, estimated income, credit range.
-4. Goal Hierarchy:
-   1. Engage and qualify
-   2. Build trust
-   3. Guide to start application (<apply_now>)
-5. Session Memory: You recall only current session context.
-
----
-### Conversation Roles
-**QUALIFIER MODE**
- - Ask focused questions to prequalify.
- - Summarize and offer to start app.
-
-**OBJECTION HANDLER MODE**
- - Empathetic reassurance.
- - Explain value of pre-approval and risk-free exploration.
-
-**PRODUCT EXPLAINER MODE**
- - Explain loan types clearly (2–3 sentences).
- - End with invitation to start application (<apply_now>).
-
----
-### Conversion Triggers
-Offer <apply_now> when:
- - Lead says “ready to apply”, “quote”, or “pre-approval”
- - You’ve collected name, email, phone
- - You’ve overcome objections
----
-Respond in plain text only. Keep short, conversational replies.
-"""
-
-# ========== ROLE PROMPT HELPER ==========
-def get_role_prompt(user_msg):
-    m = user_msg.lower()
-    if any(x in m for x in ["refinance", "buy", "loan", "apply", "pre-approval", "mortgage"]):
-        return "You are in QUALIFIER mode. Collect info and lead into application."
-    elif any(x in m for x in ["not ready", "just looking", "maybe later", "not sure"]):
-        return "You are in OBJECTION HANDLER mode. Be reassuring and guide gently."
-    elif any(x in m for x in ["fha", "conventional", "fixed", "arm", "va", "usda"]):
-        return "You are in PRODUCT EXPLAINER mode. Explain the loan type simply."
-    else:
-        return "You are in QUALIFIER mode by default."
-
-# ========== OPENAI CHAT FUNCTION ==========
-def openai_chat(prompt_messages, model="gpt-4o-mini"):
-    headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
-    body = {"model": model, "messages": prompt_messages, "temperature": 0.3, "max_tokens": 500}
-    r = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=body)
-    r.raise_for_status()
-    return r.json()["choices"][0]["message"]["content"]
-
-# ========== HUBSPOT INTEGRATION ==========
-def find_or_create_contact(email=None, phone=None, props=None):
-    props = props or {}
-    if email: props["email"] = email
-    if phone: props["phone"] = phone
-
-    url = f"{HUBSPOT_BASE}/crm/v3/objects/contacts"
-    resp = requests.post(url, params={"hapikey": HUBSPOT_API_KEY}, json={"properties": props})
-    if resp.ok:
-        return resp.json()
-    else:
-        return {"id": "unknown", "properties": props}
-
-def log_timeline(contact_id, text):
-    url = f"{HUBSPOT_BASE}/crm/v3/objects/notes"
-    payload = {"properties": {"hs_note_body": text, "associated_contact_ids": [contact_id]}}
-    requests.post(url, params={"hapikey": HUBSPOT_API_KEY}, json=payload)
-
-# ========== FLOIFY EMBED ==========
-def get_floify_embed_url(contact):
-    base = FLOIFY_BASE or "https://yourcompany.floify.com"
-    email = contact.get("properties", {}).get("email", "")
-    return f"{base}/embed?email={email}&embed_key={FLOIFY_EMBED_KEY}"
-
-# ========== CHAT ENDPOINT ==========
-@app.route("/chat", methods=["POST"])
-def chat():
-    body = request.json
-    msg = body.get("message", "")
-    email = body.get("email")
-    phone = body.get("phone")
-    session_id = body.get("session_id", "anon")
-
-    contact = find_or_create_contact(email=email, phone=phone, props={"source": "Wix Chat"})
-    contact_id = contact.get("id")
-
-    # Role + prompt
-    role_prompt = get_role_prompt(msg)
-    prompt = [
-        {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + role_prompt},
-        {"role": "user", "content": msg}
-    ]
-
-    try:
-        reply = openai_chat(prompt)
-    except Exception as e:
-        reply = "Sorry, I'm temporarily unavailable. A loan officer will reach out soon."
-
-    # Log to HubSpot
-    try:
-        log_timeline(contact_id, f"User: {msg}")
-        log_timeline(contact_id, f"Bot: {reply}")
-    except Exception:
-        pass
-
-    floify_embed = None
-    if "<apply_now>" in reply:
-        floify_embed = get_floify_embed_url(contact)
-        reply = reply.replace("<apply_now>", "Click here to start your secure application!")
-
-    return jsonify({"reply": reply, "floify_embed": floify_embed})
-
-# ========== WEBHOOK & FOLLOW-UPS ==========
-@app.route("/webhook/hubspot", methods=["POST"])
-def hubspot_webhook():
-    app.logger.info("Webhook: %s", json.dumps(request.json))
-    return ("", 200)
-
-@app.route("/nudges/run", methods=["POST"])
-def nudges():
-    return jsonify({"status": "ok", "nudges_sent": 0})
-
-# Optional test UI for local
-@app.route("/")
-def home():
-    return render_template("test_chat.html")
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)), debug=True)
-=======
 import os 
 import requests
 import uuid
@@ -174,6 +13,7 @@ from twilio.rest import Client
 import google.generativeai as genai  # Gemini AI integration
 from gemini_chatbot import check_loan_eligibility, gemini_loan_insights
 import boto3
+from flask_cors import CORS
 
 
 
@@ -198,6 +38,7 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Gemini API key
 NGROK_URL = os.getenv("NGROK_URL", "")  # Optional ngrok URL for local development
+CORS(app, origins=["https://www.stratolending.com"])
 
 # Get the base directory of the application
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -918,4 +759,3 @@ def serve_audio(filename):
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
->>>>>>> c7193aa (Initial commit)
