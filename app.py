@@ -6,7 +6,7 @@ import subprocess
 import time
 import shutil
 import base64
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, jsonify
 from dotenv import load_dotenv
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
@@ -64,6 +64,11 @@ try:
     print("Internet connectivity test successful")
 except Exception as e:
     print(f"Internet connectivity test failed: {str(e)}")
+
+def chatbot_response(message):
+    # Temporary response logic (replace with Gemini / LangChain)
+    return f"You said: {message}. I'll calculate your loan options soon!"
+
 
 
 def download_audio(url, message_sid):
@@ -755,6 +760,13 @@ def serve_audio(filename):
     """Serves audio files from the temp directory."""
     temp_dir = os.path.join(BASE_DIR, "temp")
     return send_from_directory(temp_dir, filename)
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    user_msg = request.json.get("message", "")
+    reply = chatbot_response(user_msg)
+    return jsonify({"reply": reply})
+
 
 
 if __name__ == "__main__":
