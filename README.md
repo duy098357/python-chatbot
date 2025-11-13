@@ -13,8 +13,6 @@ It provides real-time eligibility checks, EMI calculations, and integrates with 
 
       💌 WhatsApp integration via Twilio API
 
-      🌍 Multilingual support powered by Sarvam AI
-
       🧠 Google Gemini API + LangChain for AI-driven reasoning
 
       🗄️ PostgreSQL for secure financial data storage
