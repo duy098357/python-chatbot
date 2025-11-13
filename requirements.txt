@@ -1,0 +1,37 @@
+<<<<<<< HEAD
+flask
+requests
+python-dotenv
+openai
+=======
+# Web framework
+flask
+
+# Environment variable loader
+python-dotenv
+
+# Database (PostgreSQL)
+psycopg2-binary
+SQLAlchemy
+
+# AI and LLM integration
+google-generativeai
+langchain
+openai
+
+# WhatsApp / SMS integration
+twilio
+
+# Cloud storage (AWS S3)
+boto3
+
+# Data processing and analysis
+pandas
+numpy
+
+# Utility libraries
+requests
+
+# For tunneling local Flask app to the internet (for testing via ngrok)
+pyngrok
+>>>>>>> c7193aa (Initial commit)

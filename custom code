@@ -1,0 +1,54 @@
+<!-- place in Wix via Settings -> Custom Code OR embed element on the page -->
+<div id="loan-chat" style="position:fixed; right:20px; bottom:20px; width:340px; z-index:9999;">
+  <div id="chat-window" style="background:white; border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,0.15); overflow:hidden;">
+    <div id="messages" style="height:320px; overflow:auto; padding:12px;"></div>
+    <div style="display:flex; padding:8px; gap:8px;">
+      <input id="chat-input" placeholder="Ask about loans or start an application" style="flex:1; padding:8px;"/>
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floify modal container -->
+<div id="floify-modal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center;">
+  <div style="width:95%; max-width:1024px; height:90%; background:white; border-radius:8px; overflow:hidden; position:relative;">
+    <button id="close-floify" style="position:absolute; right:10px; top:10px; z-index:10;">Close</button>
+    <iframe id="floify-iframe" src="" style="width:100%; height:100%; border:0;"></iframe>
+  </div>
+</div>
+
+<script>
+const API_ROOT = "https://floify-chatbot.vercel.app/chat"; // set to your Flask server
+document.getElementById("send-btn").onclick = async () => {
+  const msg = document.getElementById("chat-input").value;
+  if(!msg) return;
+  appendMessage("You", msg);
+  document.getElementById("chat-input").value = "";
+  const payload = { message: msg, session_id: localStorage.getItem("session_id") || Math.random().toString(36).slice(2) };
+  // include email/phone if you capture them via form fields or Wix CRM
+  const res = await fetch(API_ROOT + "/chat", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  appendMessage("Bot", data.reply);
+  if(data.floify_embed){
+    // open modal and set iframe src
+    document.getElementById("floify-iframe").src = data.floify_embed;
+    document.getElementById("floify-modal").style.display = "flex";
+  }
+};
+
+function appendMessage(who, text){
+  const el = document.createElement("div");
+  el.innerHTML = `<strong>${who}:</strong> ${text}`;
+  document.getElementById("messages").appendChild(el);
+  document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+}
+
+document.getElementById("close-floify").onclick = () => {
+  document.getElementById("floify-modal").style.display = "none";
+  document.getElementById("floify-iframe").src = "";
+};
+</script>

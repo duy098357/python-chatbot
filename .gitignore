@@ -1,0 +1,101 @@
+# ------------------------------
+# Python
+# ------------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.pkl
+*.egg-info/
+*.log
+
+# Byte-compiled / optimized files
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+develop-eggs/
+.eggs/
+*.egg
+MANIFEST
+
+# ------------------------------
+# Virtual Environment
+# ------------------------------
+venv/
+env/
+ENV/
+.venv/
+venv.bak/
+
+# ------------------------------
+# Environment variables
+# ------------------------------
+.env
+.env.*
+*.env
+
+# ------------------------------
+# IDE / Editor Config Files
+# ------------------------------
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# ------------------------------
+# OS-generated files
+# ------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ------------------------------
+# Data and Backup Files
+# ------------------------------
+*.csv
+*.bak
+*.tmp
+*.swp
+*.sqlite3
+
+# ------------------------------
+# Logs and Reports
+# ------------------------------
+*.log
+logs/
+debug.log
+
+# ------------------------------
+# Jupyter and Notebooks
+# ------------------------------
+.ipynb_checkpoints/
+*.ipynb
+
+# ------------------------------
+# Cache and Temporary Files
+# ------------------------------
+.cache/
+__pycache__/
+*.pytest_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ------------------------------
+# AWS / Credentials / Keys
+# ------------------------------
+*.pem
+*.key
+*.json
+*.yaml
+*.yml
+
+# ------------------------------
+# Node.js (only if you later add a frontend)
+# ------------------------------
+node_modules/
+package-lock.json
