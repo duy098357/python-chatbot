@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-flask
-requests
-python-dotenv
-openai
-=======
+
 # Web framework
 flask
 
@@ -34,4 +29,3 @@ requests
 
 # For tunneling local Flask app to the internet (for testing via ngrok)
 pyngrok
->>>>>>> c7193aa (Initial commit)
