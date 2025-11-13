@@ -1,4 +1,4 @@
-🏦 Loan Advisory Chatbot
+🏦 Loan  Chatbot
 
 A conversational AI system that helps users explore and apply for loans intelligently.
 It provides real-time eligibility checks, EMI calculations, and integrates with WhatsApp for seamless accessibility.
