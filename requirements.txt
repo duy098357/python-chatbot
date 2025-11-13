@@ -1,6 +1,7 @@
 
 # Web framework
 flask
+flask-cors
 gunicorn
 
 # Environment variable loader
